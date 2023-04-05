@@ -1,9 +1,9 @@
 # ocpp-go
 
-[![Build Status](https://travis-ci.org/lorenzodonini/ocpp-go.svg?branch=master)](https://travis-ci.org/lorenzodonini/ocpp-go)
-[![GoDoc](https://img.shields.io/badge/godoc-reference-5272B4)](https://godoc.org/github.com/lorenzodonini/ocpp-go)
-[![Coverage Status](https://coveralls.io/repos/github/lorenzodonini/ocpp-go/badge.svg?branch=master)](https://coveralls.io/github/lorenzodonini/ocpp-go?branch=master)
-[![Go report](https://goreportcard.com/badge/github.com/lorenzodonini/ocpp-go)](https://goreportcard.com/report/github.com/lorenzodonini/ocpp-go)
+[![Build Status](https://travis-ci.org/pxc-smart-business/ocpp-go.svg?branch=master)](https://travis-ci.org/pxc-smart-business/ocpp-go)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-5272B4)](https://godoc.org/github.com/pxc-smart-business/ocpp-go)
+[![Coverage Status](https://coveralls.io/repos/github/pxc-smart-business/ocpp-go/badge.svg?branch=master)](https://coveralls.io/github/pxc-smart-business/ocpp-go?branch=master)
+[![Go report](https://goreportcard.com/badge/github.com/pxc-smart-business/ocpp-go)](https://goreportcard.com/report/github.com/pxc-smart-business/ocpp-go)
 
 Open Charge Point Protocol implementation in Go.
 
@@ -27,7 +27,7 @@ Planned milestones and features:
 Go version 1.13+ is required.
 
 ```sh
-go get github.com/lorenzodonini/ocpp-go
+go get github.com/pxc-smart-business/ocpp-go
 ```
 
 You will also need to fetch some dependencies:
@@ -44,8 +44,8 @@ Your application may either act as a [Central System](#central-system) (server) 
 If you want to integrate the library into your custom Central System, you must implement the callbacks defined in the profile interfaces, e.g.:
 ```go
 import (
-    "github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-    "github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+    "github.com/pxc-smart-business/ocpp-go/ocpp1.6/core"
+    "github.com/pxc-smart-business/ocpp-go/ocpp1.6/types"
     "time"
 )
 
@@ -170,8 +170,8 @@ docker-compose -f example/1.6/docker-compose.tls.yml up central-system
 If you want to integrate the library into your custom Charge Point, you must implement the callbacks defined in the profile interfaces, e.g.:
 ```go
 import (
-    "github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-    "github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+    "github.com/pxc-smart-business/ocpp-go/ocpp1.6/core"
+    "github.com/pxc-smart-business/ocpp-go/ocpp1.6/types"
 )
 
 type ChargePointHandler struct {
@@ -384,7 +384,7 @@ More in-depth documentation for v2.0.1 will follow.
 
 To start a CSMS instance, run the following:
 ```go
-import "github.com/lorenzodonini/ocpp-go/ocpp2.0.1"
+import "github.com/pxc-smart-business/ocpp-go/ocpp2.0.1"
 
 csms := ocpp2.NewCSMS(nil, nil)
 

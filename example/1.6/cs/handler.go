@@ -6,9 +6,9 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/firmware"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/core"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/firmware"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/types"
 )
 
 var (

@@ -2,7 +2,7 @@
 package reservation
 
 import (
-	"github.com/lorenzodonini/ocpp-go/ocpp"
+	"github.com/pxc-smart-business/ocpp-go/ocpp"
 )
 
 // Needs to be implemented by a CSMS for handling messages part of the OCPP 2.0 Reservation profile.

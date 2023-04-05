@@ -8,11 +8,11 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/lorenzodonini/ocpp-go/logging"
+	"github.com/pxc-smart-business/ocpp-go/logging"
 
-	"github.com/lorenzodonini/ocpp-go/ocpp"
-	"github.com/lorenzodonini/ocpp-go/ocppj"
-	"github.com/lorenzodonini/ocpp-go/ws"
+	"github.com/pxc-smart-business/ocpp-go/ocpp"
+	"github.com/pxc-smart-business/ocpp-go/ocppj"
+	"github.com/pxc-smart-business/ocpp-go/ws"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

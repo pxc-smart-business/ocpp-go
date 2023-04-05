@@ -2,7 +2,7 @@ package ocpp16_test
 
 import (
 	"fmt"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/reservation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

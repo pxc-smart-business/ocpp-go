@@ -2,7 +2,7 @@
 package core
 
 import (
-	"github.com/lorenzodonini/ocpp-go/ocpp"
+	"github.com/pxc-smart-business/ocpp-go/ocpp"
 )
 
 // Needs to be implemented by Central systems for handling messages part of the OCPP 1.6 Core profile.

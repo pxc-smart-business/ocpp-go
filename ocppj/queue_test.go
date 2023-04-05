@@ -1,7 +1,7 @@
 package ocppj_test
 
 import (
-	"github.com/lorenzodonini/ocpp-go/ocppj"
+	"github.com/pxc-smart-business/ocpp-go/ocppj"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"

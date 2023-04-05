@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/smartcharging"
-	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/types"
+	"github.com/pxc-smart-business/ocpp-go/ocpp2.0.1/smartcharging"
+	"github.com/pxc-smart-business/ocpp-go/ocpp2.0.1/types"
 )
 
 func (suite *OcppV2TestSuite) TestNotifyEVChargingNeedsRequestValidation() {

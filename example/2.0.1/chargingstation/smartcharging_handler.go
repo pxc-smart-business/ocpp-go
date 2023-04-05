@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/lorenzodonini/ocpp-go/ocpp"
-	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/smartcharging"
-	"github.com/lorenzodonini/ocpp-go/ocppj"
+	"github.com/pxc-smart-business/ocpp-go/ocpp"
+	"github.com/pxc-smart-business/ocpp-go/ocpp2.0.1/smartcharging"
+	"github.com/pxc-smart-business/ocpp-go/ocppj"
 )
 
 func (handler *ChargingStationHandler) OnClearChargingProfile(request *smartcharging.ClearChargingProfileRequest) (response *smartcharging.ClearChargingProfileResponse, err error) {

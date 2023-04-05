@@ -7,14 +7,14 @@ import (
 	"os"
 	"time"
 
-	ocpp16 "github.com/lorenzodonini/ocpp-go/ocpp1.6"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/firmware"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/smartcharging"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	ocpp16 "github.com/pxc-smart-business/ocpp-go/ocpp1.6"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/core"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/firmware"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/localauth"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/remotetrigger"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/reservation"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/smartcharging"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/types"
 )
 
 // ConnectorInfo contains some simple state about a single connector.

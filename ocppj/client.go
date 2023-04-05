@@ -3,8 +3,8 @@ package ocppj
 import (
 	"fmt"
 
-	"github.com/lorenzodonini/ocpp-go/ocpp"
-	"github.com/lorenzodonini/ocpp-go/ws"
+	"github.com/pxc-smart-business/ocpp-go/ocpp"
+	"github.com/pxc-smart-business/ocpp-go/ws"
 )
 
 // The endpoint initiating the connection to an OCPP server, in an OCPP-J topology.

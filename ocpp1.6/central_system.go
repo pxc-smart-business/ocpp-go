@@ -3,17 +3,17 @@ package ocpp16
 import (
 	"fmt"
 
-	"github.com/lorenzodonini/ocpp-go/internal/callbackqueue"
-	"github.com/lorenzodonini/ocpp-go/ocpp"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/firmware"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/smartcharging"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	"github.com/lorenzodonini/ocpp-go/ocppj"
-	"github.com/lorenzodonini/ocpp-go/ws"
+	"github.com/pxc-smart-business/ocpp-go/internal/callbackqueue"
+	"github.com/pxc-smart-business/ocpp-go/ocpp"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/core"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/firmware"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/localauth"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/remotetrigger"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/reservation"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/smartcharging"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/types"
+	"github.com/pxc-smart-business/ocpp-go/ocppj"
+	"github.com/pxc-smart-business/ocpp-go/ws"
 )
 
 type centralSystem struct {

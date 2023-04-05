@@ -3,7 +3,7 @@ package callbackqueue
 import (
 	"sync"
 
-	"github.com/lorenzodonini/ocpp-go/ocpp"
+	"github.com/pxc-smart-business/ocpp-go/ocpp"
 )
 
 type CallbackQueue struct {

@@ -1,7 +1,7 @@
 package ocpp16_test
 
 import (
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/types"
 	"time"
 )
 

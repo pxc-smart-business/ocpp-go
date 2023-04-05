@@ -1,7 +1,7 @@
 // Contains support for basic Smart Charging, for instance using control pilot.
 package smartcharging
 
-import "github.com/lorenzodonini/ocpp-go/ocpp"
+import "github.com/pxc-smart-business/ocpp-go/ocpp"
 
 // Needs to be implemented by Central systems for handling messages part of the OCPP 1.6 SmartCharging profile.
 type CentralSystemHandler interface {

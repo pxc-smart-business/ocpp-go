@@ -19,7 +19,9 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"github.com/lorenzodonini/ocpp-go/logging"
+	"github.com/pxc-smart-business/ocpp-go/logging"
+
+	proxyproto "github.com/pires/go-proxyproto"
 )
 
 const (
@@ -384,16 +386,38 @@ func (server *Server) Start(port int, listenPath string) {
 		return
 	}
 
-	server.addr = ln.Addr().(*net.TCPAddr)
+	proxyListener := &proxyproto.Listener{Listener: ln}
+	defer proxyListener.Close()
 
+	// Wait for a connection and accept it
+	conn, err := proxyListener.Accept()	
+	if err != nil {
+		server.error(fmt.Errorf("proxy failed to listen: %w", err))
+		return
+	}
+	defer conn.Close()
 	defer ln.Close()
+
+	// Print connection details
+	if conn.LocalAddr() == nil {
+		log.Error("couldn't retrieve local address")
+	}
+	log.Info("local address: %q", conn.LocalAddr().String())
+
+	if conn.RemoteAddr() == nil {
+		log.Error("couldn't retrieve remote address")
+	}
+	log.Info("remote address: %q", conn.RemoteAddr().String())
+
+	server.addr = conn.RemoteAddr().(*net.TCPAddr)
+
 
 	log.Infof("listening on tcp network %v", addr)
 	server.httpServer.RegisterOnShutdown(server.stopConnections)
 	if server.tlsCertificatePath != "" && server.tlsCertificateKey != "" {
-		err = server.httpServer.ServeTLS(ln, server.tlsCertificatePath, server.tlsCertificateKey)
+		err = server.httpServer.ServeTLS(proxyListener, server.tlsCertificatePath, server.tlsCertificateKey)
 	} else {
-		err = server.httpServer.Serve(ln)
+		err = server.httpServer.Serve(proxyListener)
 	}
 
 	if err != http.ErrServerClosed {

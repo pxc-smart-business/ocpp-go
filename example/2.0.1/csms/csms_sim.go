@@ -10,17 +10,17 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1"
-	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/availability"
-	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/diagnostics"
-	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
-	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/localauth"
-	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/provisioning"
-	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/remotecontrol"
-	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/reservation"
-	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/types"
-	"github.com/lorenzodonini/ocpp-go/ocppj"
-	"github.com/lorenzodonini/ocpp-go/ws"
+	"github.com/pxc-smart-business/ocpp-go/ocpp2.0.1"
+	"github.com/pxc-smart-business/ocpp-go/ocpp2.0.1/availability"
+	"github.com/pxc-smart-business/ocpp-go/ocpp2.0.1/diagnostics"
+	"github.com/pxc-smart-business/ocpp-go/ocpp2.0.1/display"
+	"github.com/pxc-smart-business/ocpp-go/ocpp2.0.1/localauth"
+	"github.com/pxc-smart-business/ocpp-go/ocpp2.0.1/provisioning"
+	"github.com/pxc-smart-business/ocpp-go/ocpp2.0.1/remotecontrol"
+	"github.com/pxc-smart-business/ocpp-go/ocpp2.0.1/reservation"
+	"github.com/pxc-smart-business/ocpp-go/ocpp2.0.1/types"
+	"github.com/pxc-smart-business/ocpp-go/ocppj"
+	"github.com/pxc-smart-business/ocpp-go/ws"
 )
 
 const (

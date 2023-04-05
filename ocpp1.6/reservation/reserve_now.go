@@ -1,7 +1,7 @@
 package reservation
 
 import (
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/types"
 	"gopkg.in/go-playground/validator.v9"
 	"reflect"
 )

@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lorenzodonini/ocpp-go/ocpp"
-	"github.com/lorenzodonini/ocpp-go/ws"
+	"github.com/pxc-smart-business/ocpp-go/ocpp"
+	"github.com/pxc-smart-business/ocpp-go/ws"
 )
 
 // ClientDispatcher contains the state and logic for handling outgoing messages on a client endpoint.

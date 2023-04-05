@@ -1,7 +1,7 @@
 // Contains features to manage the local authorization list in Charge Points.
 package localauth
 
-import "github.com/lorenzodonini/ocpp-go/ocpp"
+import "github.com/pxc-smart-business/ocpp-go/ocpp"
 
 // Needs to be implemented by Central systems for handling messages part of the OCPP 1.6 LocalAuthList profile.
 type CentralSystemHandler interface {

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/lorenzodonini/ocpp-go/ocpp"
-	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/iso15118"
-	"github.com/lorenzodonini/ocpp-go/ocppj"
+	"github.com/pxc-smart-business/ocpp-go/ocpp"
+	"github.com/pxc-smart-business/ocpp-go/ocpp2.0.1/iso15118"
+	"github.com/pxc-smart-business/ocpp-go/ocppj"
 )
 
 func (handler *ChargingStationHandler) OnDeleteCertificate(request *iso15118.DeleteCertificateRequest) (response *iso15118.DeleteCertificateResponse, err error) {

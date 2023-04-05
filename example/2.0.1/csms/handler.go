@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/sirupsen/logrus"
 
-	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/availability"
-	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/firmware"
-	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/types"
+	"github.com/pxc-smart-business/ocpp-go/ocpp2.0.1/availability"
+	"github.com/pxc-smart-business/ocpp-go/ocpp2.0.1/firmware"
+	"github.com/pxc-smart-business/ocpp-go/ocpp2.0.1/types"
 )
 
 // TransactionInfo contains info about a transaction

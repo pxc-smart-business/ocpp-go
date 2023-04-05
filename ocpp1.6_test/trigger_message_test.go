@@ -2,8 +2,8 @@ package ocpp16_test
 
 import (
 	"fmt"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/core"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/remotetrigger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/lorenzodonini/ocpp-go/ocpp"
-	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/provisioning"
-	"github.com/lorenzodonini/ocpp-go/ocppj"
+	"github.com/pxc-smart-business/ocpp-go/ocpp"
+	"github.com/pxc-smart-business/ocpp-go/ocpp2.0.1/provisioning"
+	"github.com/pxc-smart-business/ocpp-go/ocppj"
 )
 
 func (handler *ChargingStationHandler) OnGetBaseReport(request *provisioning.GetBaseReportRequest) (response *provisioning.GetBaseReportResponse, err error) {

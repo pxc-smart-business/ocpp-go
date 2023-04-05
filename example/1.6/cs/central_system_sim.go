@@ -9,15 +9,15 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	ocpp16 "github.com/lorenzodonini/ocpp-go/ocpp1.6"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/firmware"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	"github.com/lorenzodonini/ocpp-go/ocppj"
-	"github.com/lorenzodonini/ocpp-go/ws"
+	ocpp16 "github.com/pxc-smart-business/ocpp-go/ocpp1.6"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/core"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/firmware"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/localauth"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/remotetrigger"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/reservation"
+	"github.com/pxc-smart-business/ocpp-go/ocpp1.6/types"
+	"github.com/pxc-smart-business/ocpp-go/ocppj"
+	"github.com/pxc-smart-business/ocpp-go/ws"
 )
 
 const (
