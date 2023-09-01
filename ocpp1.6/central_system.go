@@ -386,7 +386,7 @@ func (cs *centralSystem) SendRequestAsync(clientId string, request ocpp.Request,
 		return fmt.Errorf("feature %v is unsupported on central system (missing profile), cannot send request", featureName)
 	}
 	switch featureName {
-	case core.ChangeAvailabilityFeatureName, core.ChangeConfigurationFeatureName, core.ClearCacheFeatureName, core.DataTransferFeatureName, core.GetConfigurationFeatureName, core.RemoteStartTransactionFeatureName, core.RemoteStopTransactionFeatureName, core.ResetFeatureName, core.UnlockConnectorFeatureName,
+	case core.StopTransactionFeatureName, core.ChangeAvailabilityFeatureName, core.ChangeConfigurationFeatureName, core.ClearCacheFeatureName, core.DataTransferFeatureName, core.GetConfigurationFeatureName, core.RemoteStartTransactionFeatureName, core.RemoteStopTransactionFeatureName, core.ResetFeatureName, core.UnlockConnectorFeatureName,
 		localauth.GetLocalListVersionFeatureName, localauth.SendLocalListFeatureName,
 		firmware.GetDiagnosticsFeatureName, firmware.UpdateFirmwareFeatureName,
 		reservation.ReserveNowFeatureName, reservation.CancelReservationFeatureName,
