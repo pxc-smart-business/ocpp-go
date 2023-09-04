@@ -812,7 +812,7 @@ func (cs *csms) Start(listenPort int, listenPath string) {
 	cs.server.Start(listenPort, listenPath)
 }
 
-func (cs *csms) sendResponse(chargingStationID string, response ocpp.Response, err error, requestId string) {
+func (cs *csms) SendResponse(chargingStationID string, response ocpp.Response, err error, requestId string) {
 	if err != nil {
 		err := cs.server.SendError(chargingStationID, requestId, ocppj.ProtocolError, "Couldn't generate valid confirmation", nil)
 		if err != nil {
@@ -988,7 +988,7 @@ func (cs *csms) handleIncomingRequest(chargingStation ChargingStationConnection,
 			cs.notSupportedError(chargingStation.ID(), requestId, action)
 			return
 		}
-		cs.sendResponse(chargingStation.ID(), response, err, requestId)
+		cs.SendResponse(chargingStation.ID(), response, err, requestId)
 	}()
 }
 

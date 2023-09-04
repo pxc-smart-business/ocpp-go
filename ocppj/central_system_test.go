@@ -523,7 +523,7 @@ func (suite *OcppJTestSuite) TestServerRequestFlow() {
 		clientID string
 		call     *ocppj.Call
 	}
-	sendResponseTrigger := make(chan triggerData, 1)
+	SendResponseTrigger := make(chan triggerData, 1)
 	suite.mockServer.On("Start", mock.AnythingOfType("int"), mock.AnythingOfType("string")).Return(nil)
 	suite.mockServer.On("Write", mock.AnythingOfType("string"), mock.Anything).Run(func(args mock.Arguments) {
 		wsID := args.String(0)
@@ -531,14 +531,14 @@ func (suite *OcppJTestSuite) TestServerRequestFlow() {
 		state := suite.centralSystem.RequestState.GetClientState(wsID)
 		call := ParseCall(&suite.centralSystem.Endpoint, state, string(data), t)
 		require.NotNil(t, call)
-		sendResponseTrigger <- triggerData{clientID: wsID, call: call}
+		SendResponseTrigger <- triggerData{clientID: wsID, call: call}
 	}).Return(nil)
 	// Mocked response generator
 	var wg sync.WaitGroup
 	wg.Add(messagesToQueue * 2)
 	go func() {
 		for {
-			d, ok := <-sendResponseTrigger
+			d, ok := <-SendResponseTrigger
 			if !ok {
 				// Test completed, quitting
 				return
@@ -607,7 +607,7 @@ func (suite *OcppJTestSuite) TestServerRequestFlow() {
 	}
 	// Wait for processing to complete
 	wg.Wait()
-	close(sendResponseTrigger)
+	close(SendResponseTrigger)
 	q, _ := suite.serverRequestMap.Get(mockChargePoint1)
 	assert.True(t, q.IsEmpty())
 	q, _ = suite.serverRequestMap.Get(mockChargePoint2)

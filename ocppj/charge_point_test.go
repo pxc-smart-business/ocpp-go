@@ -408,20 +408,20 @@ func (suite *OcppJTestSuite) TestClientRequestFlow() {
 	var mutex sync.Mutex
 	messagesToQueue := 10
 	processedMessages := 0
-	sendResponseTrigger := make(chan *ocppj.Call, 1)
+	SendResponseTrigger := make(chan *ocppj.Call, 1)
 	suite.mockClient.On("Start", mock.AnythingOfType("string")).Return(nil)
 	suite.mockClient.On("Write", mock.Anything).Run(func(args mock.Arguments) {
 		data := args.Get(0).([]byte)
 		call := ParseCall(&suite.chargePoint.Endpoint, suite.chargePoint.RequestState, string(data), t)
 		require.NotNil(t, call)
-		sendResponseTrigger <- call
+		SendResponseTrigger <- call
 	}).Return(nil)
 	// Mocked response generator
 	var wg sync.WaitGroup
 	wg.Add(messagesToQueue)
 	go func() {
 		for {
-			call, ok := <-sendResponseTrigger
+			call, ok := <-SendResponseTrigger
 			if !ok {
 				// Test completed, quitting
 				return
@@ -478,7 +478,7 @@ func (suite *OcppJTestSuite) TestClientRequestFlow() {
 	}
 	// Wait for processing to complete
 	wg.Wait()
-	close(sendResponseTrigger)
+	close(SendResponseTrigger)
 	assert.True(t, suite.clientRequestQueue.IsEmpty())
 }
 

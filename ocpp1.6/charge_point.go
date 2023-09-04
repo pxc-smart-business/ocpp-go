@@ -294,7 +294,7 @@ func (cp *chargePoint) clearCallbacks(invokeCallback bool) {
 	}
 }
 
-func (cp *chargePoint) sendResponse(confirmation ocpp.Response, err error, requestId string) {
+func (cp *chargePoint) SendResponse(confirmation ocpp.Response, err error, requestId string) {
 	// send error response
 	if err != nil {
 		err = cp.client.SendError(requestId, ocppj.ProtocolError, err.Error(), nil)
@@ -447,5 +447,5 @@ func (cp *chargePoint) handleIncomingRequest(request ocpp.Request, requestId str
 		cp.notSupportedError(requestId, action)
 		return
 	}
-	cp.sendResponse(confirmation, err, requestId)
+	cp.SendResponse(confirmation, err, requestId)
 }

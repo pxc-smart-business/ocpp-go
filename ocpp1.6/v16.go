@@ -250,6 +250,7 @@ type CentralSystem interface {
 	// Starts running the central system on the specified port and URL.
 	// The central system runs as a daemon and handles incoming charge point connections and messages.
 	//
+	SendResponse(chargePointId string, confirmation ocpp.Response, err error, requestId string)
 	// The function blocks forever, so it is suggested to wrap it in a goroutine, in case other functionality needs to be executed on the main program thread.
 	Start(listenPort int, listenPath string)
 	// Errors returns a channel for error messages. If it doesn't exist it es created.

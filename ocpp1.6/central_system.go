@@ -406,7 +406,7 @@ func (cs *centralSystem) Start(listenPort int, listenPath string) {
 	cs.server.Start(listenPort, listenPath)
 }
 
-func (cs *centralSystem) sendResponse(chargePointId string, confirmation ocpp.Response, err error, requestId string) {
+func (cs *centralSystem) SendResponse(chargePointId string, confirmation ocpp.Response, err error, requestId string) {
 	// send error response
 	if err != nil {
 		cs.error(fmt.Errorf("error handling request: %w", err))
@@ -517,7 +517,7 @@ func (cs *centralSystem) handleIncomingRequest(chargePoint ChargePointConnection
 			cs.notSupportedError(chargePoint.ID(), requestId, action)
 			return
 		}
-		cs.sendResponse(chargePoint.ID(), confirmation, err, requestId)
+		cs.SendResponse(chargePoint.ID(), confirmation, err, requestId)
 	}()
 }
 

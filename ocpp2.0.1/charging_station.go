@@ -554,7 +554,7 @@ func (cs *chargingStation) asyncCallbackHandler() {
 	}
 }
 
-func (cs *chargingStation) sendResponse(response ocpp.Response, err error, requestId string) {
+func (cs *chargingStation) SendResponse(response ocpp.Response, err error, requestId string) {
 	// send error response
 	if err != nil {
 		err = cs.client.SendError(requestId, ocppj.ProtocolError, err.Error(), nil)
@@ -776,5 +776,5 @@ func (cs *chargingStation) handleIncomingRequest(request ocpp.Request, requestId
 		cs.notSupportedError(requestId, action)
 		return
 	}
-	cs.sendResponse(response, err, requestId)
+	cs.SendResponse(response, err, requestId)
 }
