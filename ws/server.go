@@ -64,10 +64,19 @@ type Server interface {
 	// Shuts down a running websocket server.
 	// All open channels will be forcefully closed, and the previously called Start function will return.
 	Stop()
+	// Shutdown gracefully shuts the server down, bounding the underlying
+	// http.Server.Shutdown by ctx. Stop() delegates here with
+	// context.Background(). On early ctx expiry Errors() is closed immediately
+	// and any later teardown errors are dropped.
+	Shutdown(ctx context.Context) error
 	// Closes a specific websocket connection.
 	StopConnection(id string, closeError websocket.CloseError) error
-	// Errors returns a channel for error messages. If it doesn't exist it es created.
-	// The channel is closed by the server when stopped.
+	// Errors returns a buffered channel for asynchronous error messages.
+	// The channel is created when the server is constructed and is closed by the
+	// server when stopped. Delivery is best-effort and lossy: the channel has a
+	// small buffer and errors are dropped (not blocked on) when it is full, so a
+	// slow or absent consumer never blocks the server. Consume it promptly if you
+	// rely on error notifications.
 	Errors() <-chan error
 	// Sets a callback function for all incoming messages.
 	// The callbacks accept a Channel and the received data.
@@ -131,7 +140,9 @@ type Server interface {
 // Use the NewServer function to create a new server.
 type server struct {
 	connections           map[string]*webSocket
+	gate                  map[string]int
 	httpServer            *http.Server
+	stopped               bool
 	messageHandler        func(ws Channel, data []byte) error
 	chargePointIdResolver func(*http.Request) (string, error)
 	checkClientHandler    CheckClientHandler
@@ -141,12 +152,28 @@ type server struct {
 	tlsCertificatePath    string
 	tlsCertificateKey     string
 	timeoutConfig         ServerTimeoutConfig
+	duplicatePolicy       DuplicateConnectionPolicy
+	evictionTimeout       time.Duration
 	upgrader              websocket.Upgrader
 	errC                  chan error
+	errClosed             bool // true once errC has been closed, to prevent double-close and sends on a closed channel
 	connMutex             sync.RWMutex
 	addr                  *net.TCPAddr
 	httpHandler           *mux.Router
 }
+
+// DuplicateConnectionPolicy controls how the server handles a new connection
+// attempt using an ID that already has an active websocket.
+type DuplicateConnectionPolicy int
+
+const (
+	// KeepCurrent preserves the existing behavior: reject the new duplicate
+	// connection and keep the current websocket active.
+	KeepCurrent DuplicateConnectionPolicy = iota
+	// KeepNew evicts the current websocket and accepts the new duplicate only
+	// after the old websocket's disconnect teardown has completed.
+	KeepNew
+)
 
 // ServerOpt is a function that can be used to set options on a server during creation.
 type ServerOpt func(s *server)
@@ -160,6 +187,43 @@ func WithServerTLSConfig(certificatePath string, certificateKey string, tlsConfi
 		if tlsConfig != nil {
 			s.httpServer.TLSConfig = tlsConfig
 		}
+	}
+}
+
+// WithDuplicateConnectionPolicy sets the duplicate-connection policy for the
+// server at construction time. The default is KeepCurrent.
+//
+// Security caveat: KeepNew lets any client that can authenticate and present
+// or guess an active charger ID evict that charger's current connection. Use
+// KeepNew only behind an authentication/authorization gate that proves the
+// connecting peer is allowed to claim the requested ID.
+func WithDuplicateConnectionPolicy(policy DuplicateConnectionPolicy) ServerOpt {
+	return func(s *server) {
+		s.duplicatePolicy = policy
+	}
+}
+
+// WithDuplicateConnectionEvictionTimeout sets the bounded wait for KeepNew
+// eviction teardown. It is a construction-time option; when unset, the server
+// uses a production default of WriteWait plus a dispatcher and handler budget.
+func WithDuplicateConnectionEvictionTimeout(d time.Duration) ServerOpt {
+	return func(s *server) {
+		s.evictionTimeout = d
+	}
+}
+
+// WithServerReadLimit sets the per-message inbound read limit (bytes) on the
+// server's timeout configuration at construction time, leaving every other
+// timeout at its default. Unlike SetTimeoutConfig with a struct literal —
+// which silently zeroes WriteWait/PingWait — this cannot disable the write
+// and ping deadlines.
+//
+// See ServerTimeoutConfig.ReadLimit for full semantics: the limit is bound at
+// upgrade time, exceeding it drops the connection, and any value <= 0 means
+// unlimited (the default).
+func WithServerReadLimit(limit int64) ServerOpt {
+	return func(s *server) {
+		s.timeoutConfig.ReadLimit = limit
 	}
 }
 
@@ -183,9 +247,12 @@ func WithServerTLSConfig(certificatePath string, certificateKey string, tlsConfi
 func NewServer(opts ...ServerOpt) Server {
 	router := mux.NewRouter()
 	s := &server{
+		connections:   make(map[string]*webSocket),
+		gate:          make(map[string]int),
 		httpServer:    &http.Server{},
 		timeoutConfig: NewServerTimeoutConfig(),
 		upgrader:      websocket.Upgrader{Subprotocols: []string{}},
+		errC:          make(chan error, 1),
 		httpHandler:   router,
 		chargePointIdResolver: func(r *http.Request) (string, error) {
 			url := r.URL
@@ -242,42 +309,63 @@ func (s *server) SetCheckOriginHandler(handler func(r *http.Request) bool) {
 
 func (s *server) error(err error) {
 	log.Error(err)
-	if s.errC != nil {
-		s.errC <- err
+	// Guard the send with the mutex so it cannot race with Stop() closing the
+	// channel. The send is non-blocking (buffered channel with a default case),
+	// so the mutex is never held across a blocking channel operation.
+	s.connMutex.RLock()
+	defer s.connMutex.RUnlock()
+	if s.errClosed {
+		return
+	}
+	select {
+	case s.errC <- err:
+	default:
 	}
 }
 
 func (s *server) Errors() <-chan error {
-	if s.errC == nil {
-		s.errC = make(chan error, 1)
-	}
+	s.connMutex.RLock()
+	defer s.connMutex.RUnlock()
 	return s.errC
 }
 
 func (s *server) Addr() *net.TCPAddr {
+	s.connMutex.RLock()
+	defer s.connMutex.RUnlock()
 	return s.addr
 }
 
 func (s *server) AddHttpHandler(listenPath string, handler func(w http.ResponseWriter, r *http.Request)) {
+	// The mux router is not safe for concurrent registration. Guard it with the
+	// shared mutex so concurrent AddHttpHandler/Start calls don't race.
+	s.connMutex.Lock()
+	defer s.connMutex.Unlock()
 	s.httpHandler.HandleFunc(listenPath, handler)
 }
 
 func (s *server) Start(port int, listenPath string) {
+	addr := fmt.Sprintf(":%v", port)
+
+	// Configure lifecycle fields under the lock so they don't race with Stop(),
+	// Addr() and concurrent AddHttpHandler calls. The lock is released before
+	// the blocking Serve call.
 	s.connMutex.Lock()
 	s.connections = make(map[string]*webSocket)
-	s.connMutex.Unlock()
-
+	s.gate = make(map[string]int)
+	s.stopped = false
 	if s.httpServer == nil {
 		s.httpServer = &http.Server{}
 	}
-
-	addr := fmt.Sprintf(":%v", port)
 	s.httpServer.Addr = addr
-
-	s.AddHttpHandler(listenPath, func(w http.ResponseWriter, r *http.Request) {
+	// Register the websocket handler directly on the router (we already hold the
+	// lock, so we must not call AddHttpHandler, which re-acquires it).
+	s.httpHandler.HandleFunc(listenPath, func(w http.ResponseWriter, r *http.Request) {
 		s.wsHandler(w, r)
 	})
 	s.httpServer.Handler = s.httpHandler
+	// Snapshot the server so we can call Serve without holding the lock.
+	httpServer := s.httpServer
+	s.connMutex.Unlock()
 
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
@@ -285,16 +373,18 @@ func (s *server) Start(port int, listenPath string) {
 		return
 	}
 
+	s.connMutex.Lock()
 	s.addr = ln.Addr().(*net.TCPAddr)
+	s.connMutex.Unlock()
 
 	defer ln.Close()
 
 	log.Infof("listening on tcp network %v", addr)
-	s.httpServer.RegisterOnShutdown(s.stopConnections)
+	httpServer.RegisterOnShutdown(s.stopConnections)
 	if s.tlsCertificatePath != "" && s.tlsCertificateKey != "" {
-		err = s.httpServer.ServeTLS(ln, s.tlsCertificatePath, s.tlsCertificateKey)
+		err = httpServer.ServeTLS(ln, s.tlsCertificatePath, s.tlsCertificateKey)
 	} else {
-		err = s.httpServer.Serve(ln)
+		err = httpServer.Serve(ln)
 	}
 
 	if !errors.Is(err, http.ErrServerClosed) {
@@ -302,17 +392,34 @@ func (s *server) Start(port int, listenPath string) {
 	}
 }
 
-func (s *server) Stop() {
-	log.Info("stopping websocket server")
-	err := s.httpServer.Shutdown(context.TODO())
-	if err != nil {
-		s.error(fmt.Errorf("shutdown failed: %w", err))
-	}
+// Stop shuts the server down and waits (unbounded) for connections to drain.
+func (s *server) Stop() { _ = s.Shutdown(context.Background()) }
 
-	if s.errC != nil {
-		close(s.errC)
-		s.errC = nil
+// Shutdown gracefully shuts the server down, bounding the underlying
+// http.Server.Shutdown by ctx. It returns ctx.Err() if ctx is done before that
+// completes, or a listener-close error, or nil. NOTE: upgraded ws connections
+// are hijacked and closed by the RegisterOnShutdown hook in an un-awaited
+// goroutine, so ctx does NOT enforce a hard per-connection deadline. Stop() delegates here with context.Background().
+func (s *server) Shutdown(ctx context.Context) error {
+	log.Info("stopping websocket server")
+	s.connMutex.RLock()
+	httpServer := s.httpServer
+	s.connMutex.RUnlock()
+	var err error
+	if httpServer != nil {
+		err = httpServer.Shutdown(ctx) // nil, ctx.Err(), or a listener-close error
+		if err != nil {
+			// Preserve Stop()'s async report; surface before the errC close.
+			s.error(fmt.Errorf("shutdown failed: %w", err))
+		}
 	}
+	s.connMutex.Lock()
+	if !s.errClosed {
+		s.errClosed = true
+		close(s.errC)
+	}
+	s.connMutex.Unlock()
+	return err
 }
 
 func (s *server) StopConnection(id string, closeError websocket.CloseError) error {
@@ -335,8 +442,9 @@ func (s *server) GetChannel(websocketId string) (Channel, bool) {
 }
 
 func (s *server) stopConnections() {
-	s.connMutex.RLock()
-	defer s.connMutex.RUnlock()
+	s.connMutex.Lock()
+	defer s.connMutex.Unlock()
+	s.stopped = true
 	for _, conn := range s.connections {
 		_ = conn.Close(websocket.CloseError{Code: websocket.CloseNormalClosure, Text: ""})
 	}
@@ -344,8 +452,8 @@ func (s *server) stopConnections() {
 
 func (s *server) Write(webSocketId string, data []byte) error {
 	s.connMutex.RLock()
-	defer s.connMutex.RUnlock()
 	w, ok := s.connections[webSocketId]
+	s.connMutex.RUnlock()
 	if !ok {
 		return fmt.Errorf("couldn't write to websocket. No socket with id %v is open", webSocketId)
 	}
@@ -423,37 +531,27 @@ out:
 		_ = conn.Close()
 		return
 	}
-	// Check whether client exists
-	s.connMutex.Lock()
-	// There is already a connection with the same ID. Close the new one immediately with a PolicyViolation.
-	if _, exists := s.connections[id]; exists {
-		s.connMutex.Unlock()
-		s.error(fmt.Errorf("client %s already exists, closing duplicate client", id))
-		_ = conn.WriteControl(websocket.CloseMessage,
-			websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "a connection with this ID already exists"),
-			time.Now().Add(s.timeoutConfig.WriteWait))
-		_ = conn.Close()
-		return
-	}
 	// Create web socket for client, state is automatically set to connected
+	wsCfg := NewDefaultWebSocketConfig(
+		s.timeoutConfig.WriteWait,
+		s.timeoutConfig.PingWait,
+		s.timeoutConfig.PingPeriod,
+		s.timeoutConfig.PongWait)
+	wsCfg.ReadLimit = s.timeoutConfig.ReadLimit
 	ws := newWebSocket(
 		id,
 		conn,
 		r.TLS,
-		NewDefaultWebSocketConfig(
-			s.timeoutConfig.WriteWait,
-			s.timeoutConfig.PingWait,
-			s.timeoutConfig.PingPeriod,
-			s.timeoutConfig.PongWait),
+		wsCfg,
 		s.handleMessage,
 		s.handleDisconnect,
 		func(_ Channel, err error) {
 			s.error(err)
 		},
 	)
-	// Add new client
-	s.connections[ws.id] = ws
-	s.connMutex.Unlock()
+	if !s.registerNewConnection(ws) {
+		return
+	}
 	// Start reader and write routine
 	ws.run()
 	if s.newClientHandler != nil {
@@ -462,8 +560,102 @@ out:
 	}
 }
 
+func (s *server) duplicateEvictionTimeout() time.Duration {
+	if s.evictionTimeout > 0 {
+		return s.evictionTimeout
+	}
+	return s.timeoutConfig.WriteWait + 4*time.Second
+}
+
+func (s *server) rejectConnection(conn *websocket.Conn, code int, reason string) {
+	_ = conn.WriteControl(websocket.CloseMessage,
+		websocket.FormatCloseMessage(code, reason),
+		time.Now().Add(s.timeoutConfig.WriteWait))
+	_ = conn.Close()
+}
+
+func (s *server) decrementGate(id string) {
+	s.connMutex.Lock()
+	defer s.connMutex.Unlock()
+	s.gate[id]--
+	if s.gate[id] <= 0 {
+		delete(s.gate, id)
+	}
+}
+
+func (s *server) registerNewConnection(ws *webSocket) bool {
+	id := ws.ID()
+	s.connMutex.Lock()
+	if s.stopped {
+		s.connMutex.Unlock()
+		s.error(fmt.Errorf("server is stopping, closing new client %s", id))
+		s.rejectConnection(ws.connection, websocket.ClosePolicyViolation, "server shutting down")
+		return false
+	}
+	if s.gate[id] > 0 {
+		s.connMutex.Unlock()
+		s.error(fmt.Errorf("client %s connection transition in progress, closing duplicate client", id))
+		s.rejectConnection(ws.connection, websocket.ClosePolicyViolation, "connection transition in progress")
+		return false
+	}
+	old, exists := s.connections[id]
+	if !exists {
+		s.connections[id] = ws
+		s.connMutex.Unlock()
+		return true
+	}
+	if s.duplicatePolicy != KeepNew {
+		s.connMutex.Unlock()
+		s.error(fmt.Errorf("client %s already exists, closing duplicate client", id))
+		s.rejectConnection(ws.connection, websocket.ClosePolicyViolation, "a connection with this ID already exists")
+		return false
+	}
+	s.gate[id]++
+	defer s.decrementGate(id)
+	s.connMutex.Unlock()
+
+	if err := old.Close(websocket.CloseError{Code: websocket.ClosePolicyViolation, Text: "reconnected"}); err != nil {
+		log.Debugf("closing old duplicate connection for %s returned: %v", id, err)
+	}
+
+	timer := time.NewTimer(s.duplicateEvictionTimeout())
+	defer timer.Stop()
+	select {
+	case <-old.teardownDone:
+	case <-timer.C:
+		s.error(fmt.Errorf("timed out waiting for old duplicate connection %s to tear down", id))
+		s.rejectConnection(ws.connection, websocket.ClosePolicyViolation, "timed out waiting for old connection teardown")
+		return false
+	}
+
+	s.connMutex.Lock()
+	if s.stopped {
+		s.connMutex.Unlock()
+		s.error(fmt.Errorf("server is stopping, closing replacement client %s", id))
+		s.rejectConnection(ws.connection, websocket.ClosePolicyViolation, "server shutting down")
+		return false
+	}
+	if _, exists := s.connections[id]; exists {
+		s.connMutex.Unlock()
+		s.error(fmt.Errorf("client %s still exists after duplicate eviction, closing replacement", id))
+		s.rejectConnection(ws.connection, websocket.ClosePolicyViolation, "a connection with this ID already exists")
+		return false
+	}
+	s.connections[id] = ws
+	s.connMutex.Unlock()
+	return true
+}
+
 // --------- Internal callbacks webSocket -> server ---------
 func (s *server) handleMessage(w Channel, data []byte) error {
+	s.connMutex.RLock()
+	current, ok := s.connections[w.ID()]
+	isCurrent := ok && current == w
+	s.connMutex.RUnlock()
+	if !isCurrent {
+		log.Debugf("dropping inbound message from stale websocket %s", w.ID())
+		return nil
+	}
 	if s.messageHandler != nil {
 		return s.messageHandler(w, data)
 	}
@@ -471,11 +663,52 @@ func (s *server) handleMessage(w Channel, data []byte) error {
 }
 
 func (s *server) handleDisconnect(w Channel, _ error) {
-	// server never attempts to auto-reconnect to client. Resources are simply freed up
+	if ws, ok := w.(*webSocket); ok && ws.teardownDone != nil {
+		defer ws.teardownOnce.Do(func() {
+			close(ws.teardownDone)
+		})
+	}
+	// server never attempts to auto-reconnect to client. Resources are simply freed up.
+	//
+	// Identity-guarded removal + ordered/guarded disconnect (S4, #292/#387):
+	// a stale/superseded socket (e.g. a slow disconnect racing a same-ID
+	// reconnect) must not clobber a newer entry in s.connections, nor emit a
+	// disconnected event after a newer connected event for the same ID.
+	//
+	// The transition gate below also prevents a reconnect from registering in
+	// the window after this socket is removed but before the disconnect callback
+	// chain has returned.
+	id := w.ID()
 	s.connMutex.Lock()
-	delete(s.connections, w.ID())
+	s.gate[id]++
+	defer s.decrementGate(id)
+	current, ok := s.connections[id]
+	isCurrent := ok && current == w // pointer identity: *webSocket vs Channel(holding *webSocket) is a valid, well-defined comparison
+	if isCurrent {
+		delete(s.connections, id)
+	}
 	s.connMutex.Unlock()
-	log.Infof("closed connection to %s", w.ID())
+	if !isCurrent {
+		// We were already superseded/removed (a newer same-ID connection, or a
+		// server-initiated removal) — stay silent. Emitting a disconnect now would
+		// land *after* the newer connect and make a live client look gone (#292).
+		log.Debugf("suppressed stale disconnect for %s (superseded before removal)", id)
+		return
+	}
+	// Re-check right before firing: a newer connection for this ID may have
+	// registered between the Unlock above and here (e.g. a reconnector parked at
+	// connMutex.Lock). If so, its newClientHandler has run (or is about to) and
+	// THIS disconnect must not be observed after it.
+	s.connMutex.RLock()
+	_, superseded := s.connections[id]
+	s.connMutex.RUnlock()
+	if superseded {
+		log.Debugf("suppressed stale disconnect for %s (superseded during removal)", id)
+		return
+	}
+	// Log "closed" only when we actually emit the disconnect, so the log and the
+	// event stream agree (a suppressed disconnect above does not log a close).
+	log.Infof("closed connection to %s", id)
 	if s.disconnectedHandler != nil {
 		s.disconnectedHandler(w)
 	}

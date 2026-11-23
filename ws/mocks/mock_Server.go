@@ -3,10 +3,12 @@
 package mocks
 
 import (
-	net "net"
+	context "context"
 	http "net/http"
 
 	mock "github.com/stretchr/testify/mock"
+
+	net "net"
 
 	websocket "github.com/gorilla/websocket"
 
@@ -472,6 +474,52 @@ func (_c *MockServer_SetTimeoutConfig_Call) Return() *MockServer_SetTimeoutConfi
 
 func (_c *MockServer_SetTimeoutConfig_Call) RunAndReturn(run func(ws.ServerTimeoutConfig)) *MockServer_SetTimeoutConfig_Call {
 	_c.Run(run)
+	return _c
+}
+
+// Shutdown provides a mock function with given fields: ctx
+func (_m *MockServer) Shutdown(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Shutdown")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockServer_Shutdown_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Shutdown'
+type MockServer_Shutdown_Call struct {
+	*mock.Call
+}
+
+// Shutdown is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockServer_Expecter) Shutdown(ctx interface{}) *MockServer_Shutdown_Call {
+	return &MockServer_Shutdown_Call{Call: _e.mock.On("Shutdown", ctx)}
+}
+
+func (_c *MockServer_Shutdown_Call) Run(run func(ctx context.Context)) *MockServer_Shutdown_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockServer_Shutdown_Call) Return(_a0 error) *MockServer_Shutdown_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockServer_Shutdown_Call) RunAndReturn(run func(context.Context) error) *MockServer_Shutdown_Call {
+	_c.Call.Return(run)
 	return _c
 }
 

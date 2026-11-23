@@ -145,6 +145,39 @@ func (_c *MockClient_IsConnected_Call) RunAndReturn(run func() bool) *MockClient
 	return _c
 }
 
+// SetAutoReconnect provides a mock function with given fields: enabled
+func (_m *MockClient) SetAutoReconnect(enabled bool) {
+	_m.Called(enabled)
+}
+
+// MockClient_SetAutoReconnect_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetAutoReconnect'
+type MockClient_SetAutoReconnect_Call struct {
+	*mock.Call
+}
+
+// SetAutoReconnect is a helper method to define mock.On call
+//   - enabled bool
+func (_e *MockClient_Expecter) SetAutoReconnect(enabled interface{}) *MockClient_SetAutoReconnect_Call {
+	return &MockClient_SetAutoReconnect_Call{Call: _e.mock.On("SetAutoReconnect", enabled)}
+}
+
+func (_c *MockClient_SetAutoReconnect_Call) Run(run func(enabled bool)) *MockClient_SetAutoReconnect_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(bool))
+	})
+	return _c
+}
+
+func (_c *MockClient_SetAutoReconnect_Call) Return() *MockClient_SetAutoReconnect_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockClient_SetAutoReconnect_Call) RunAndReturn(run func(bool)) *MockClient_SetAutoReconnect_Call {
+	_c.Run(run)
+	return _c
+}
+
 // SetBasicAuth provides a mock function with given fields: username, password
 func (_m *MockClient) SetBasicAuth(username string, password string) {
 	_m.Called(username, password)
